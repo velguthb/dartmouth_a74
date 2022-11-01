@@ -3,12 +3,13 @@ from astropy import units, constants
 import astropy.io.ascii
 import scipy.interpolate
 
-def planck_intensity(wavelength, temperature):
+def planck_intensity(xarr, temperature, uout='mks'):
     '''
     This function calculates the thermal emission intensity spectrum of a surface.
 
         Inputs:
-            wavelength = numpy array of wavelengths (with astropy units)
+            wavelength = numpy array of wavelengths (with astropy units) OR
+                numpy array of frequencies
             temperature = a single number, the temperature (with astropy units)
 
         Outputs:
@@ -23,13 +24,24 @@ def planck_intensity(wavelength, temperature):
     c = constants.c
 
     # this is the thing that goes into the exponent (its units better cancel!)
-    u = h*c/(wavelength*k*temperature)
+    if xarr.decompose().unit=='1/s':
+        u = (h*xarr/(k*temperature)).decompose()
+        intensity = (2*h*xarr**3/c**2/(np.exp(u) - 1))/units.steradian
+        uout = 'cgs'
+    else:
+        u = h*c/(xarr*k*temperature)
+        # calculate the intensity from the Planck function
+        intensity = (2*h*c**2/xarr**5/(np.exp(u) - 1))/units.steradian
+        uout = 'mks'
 
-    # calculate the intensity from the Planck function
-    intensity = (2*h*c**2/wavelength**5/(np.exp(u) - 1))/units.steradian
-
+    # this isn't sufficiently general, need to be able to use MKS or CGS
+    # with either per wavelength or per frequency, forcing behavior above
     # return the intensity
-    return intensity.to('W/(m**2*micron*sr)')
+    if uout=='mks':
+        return intensity.to('W/(m**2*micron*sr)')
+    else: # cgs
+        return intensity.to('erg/(cm**2*s*Hz*sr)')
+
 
 
 def planck_flux(wavelength, temperature):
@@ -81,11 +93,6 @@ def xyz2rgb(X, Y, Z):
     return color
 
 
-# load the color matching functions as an astropy table
-cie = astropy.io.ascii.read('ciexyz31.csv')
-x = scipy.interpolate.interp1d(cie['wavelength'], cie['X'], fill_value=0.0, bounds_error=False)
-y = scipy.interpolate.interp1d(cie['wavelength'], cie['Y'], fill_value=0.0, bounds_error=False)
-z = scipy.interpolate.interp1d(cie['wavelength'], cie['Z'], fill_value=0.0, bounds_error=False)
 
 def spectrum2color(w, f):
     '''
@@ -96,6 +103,12 @@ def spectrum2color(w, f):
         f = flux (with astropy units convertible to W/(nm m**2))
 
     '''
+    
+    # load the color matching functions as an astropy table
+    cie = astropy.io.ascii.read('ciexyz31.csv')
+    x = scipy.interpolate.interp1d(cie['wavelength'], cie['X'], fill_value=0.0, bounds_error=False)
+    y = scipy.interpolate.interp1d(cie['wavelength'], cie['Y'], fill_value=0.0, bounds_error=False)
+    z = scipy.interpolate.interp1d(cie['wavelength'], cie['Z'], fill_value=0.0, bounds_error=False)
 
     w_nm = w.to('nm').value
 
