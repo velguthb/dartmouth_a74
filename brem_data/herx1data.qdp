@@ -1,6 +1,6 @@
 #NuSTAR FPMA data only for Her X-1 spectrum
 #energy (kev), energy error, count rate (counts/s), count rate error, total model, bbody model, gauss model, cutoffpl model
-energy energy_error count_rate  count_rate_error total_model bbody_model, gauss_model cutoffpl_model
+energy energy_error count_rate  count_rate_error total_model bbody_model gauss_model cutoffpl_model
 3.01999998 1.99999809E-2 4.91254616 7.56188929E-2 5.56397295 2.01545191 4.11792798E-3 3.54440284
 3.05999994 1.99999809E-2 5.04173326 7.66233578E-2 5.6018548 1.87806022 4.20346949E-3 3.71959114
 3.0999999 1.99999809E-2 5.21779394 7.77914375E-2 5.6417799 1.7429688 4.18056175E-3 3.89463043
